@@ -62,6 +62,7 @@ class Encoder:
             return token
 
         while True:
+            #print(word)
             bigram = min(pairs, key = lambda pair: self.bpe_ranks.get(pair, float('inf')))
             if bigram not in self.bpe_ranks:
                 break
@@ -91,16 +92,28 @@ class Encoder:
                 pairs = get_pairs(word)
         word = ' '.join(word)
         self.cache[token] = word
+        #print(word)
         return word
 
     def encode(self, text):
         bpe_tokens = []
         for token in re.findall(self.pat, text):
             token = ''.join(self.byte_encoder[b] for b in token.encode('utf-8'))
+            #print(token, self.bpe(token))
             bpe_tokens.extend(self.encoder[bpe_token] for bpe_token in self.bpe(token).split(' '))
         return bpe_tokens
 
-    def decode(self, tokens):
+    def words(self, text):
+        bpe_tokens = []
+        for token in re.findall(self.pat, text):
+            token = ''.join(self.byte_encoder[b] for b in token.encode('utf-8'))
+            bpe_tokens.append(token)
+        return bpe_tokens
+    
+    def decode(self, tokens, as_list=False):
+        if as_list:
+            text = [bytearray([self.byte_decoder[x] for x in self.decoder[token]]).decode("utf-8","ignore") for token in tokens]
+            return text
         text = ''.join([self.decoder[token] for token in tokens])
         text = bytearray([self.byte_decoder[c] for c in text]).decode('utf-8', errors=self.errors)
         return text
